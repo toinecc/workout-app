@@ -12,7 +12,7 @@ wheels/
 # OS files
 .DS_Store
 
-# Generated data
-data/
-
-~data/gifs/*
+# # Generated data
+# data/musics/
+# data/musics/
+# !data/**/.gitkeep

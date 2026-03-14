@@ -11,11 +11,11 @@ from workout_app.generate import generate_image
 from workout_app.gif import add_label, save_gif
 from workout_app.video import build_workout
 
-app = typer.Typer(help="Generate fun exercise GIFs using AI.")
+app = typer.Typer(help="CLI to create fun workouts!")
 
 
 @app.command()
-def generate(
+def generate_gif(
     exercise: Annotated[
         str,
         typer.Argument(help=f"Exercise name. Built-in: {', '.join(EXERCISES.keys())}"),

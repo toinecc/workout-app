@@ -166,11 +166,18 @@ def build_workout(
         frames, frame_duration_ms = load_gif_frames(gif_path)
         labeled = [add_label(f.copy(), name.upper(), position="bottom") for f in frames]
 
-        # Loop frames to fill the exercise duration, with countdown
+        # Expand GIF frames to match video fps, preserving original playback speed
+        # Each GIF frame is repeated for (frame_duration_ms / 1000 * fps) video frames
+        video_frames_per_gif_frame = max(1, round(frame_duration_ms / 1000 * fps))
+        one_cycle: list[Image.Image] = []
+        for lf in labeled:
+            one_cycle.extend([lf] * video_frames_per_gif_frame)
+
+        # Loop the cycle to fill the exercise duration, with countdown
         total_frames_needed = duration_secs * fps
         for j in range(total_frames_needed):
             seconds_left = duration_secs - (j // fps)
-            frame = _add_countdown(labeled[j % len(labeled)], seconds_left)
+            frame = _add_countdown(one_cycle[j % len(one_cycle)], seconds_left)
             all_frames.append(frame)
 
         # Add rest screens between exercises (not after the last one)

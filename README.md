@@ -15,9 +15,67 @@ Generate animated exercise GIFs using AI and assemble them into full workout vid
 uv sync
 ```
 
+## Project Structure
+
+```
+workout_app/
+  exercises.py   # Exercise pose definitions and style prompts
+  generate.py    # AI image generation via Replicate
+  gif.py         # GIF tooling: labeling, loading, saving
+  video.py       # Workout video assembly (MP4 with ffmpeg)
+  cli.py         # CLI commands (generate, workout)
+```
+
 ## CLI Commands
 
-### `generate` — Generate an exercise GIF
+### `generate-workout` — Assemble a workout video
+
+Combine exercise GIFs into a full workout MP4 video with countdown timers, rest screens, an optional title card, and background music.
+
+```bash
+uv run generate-exercise-gif generate-workout [options]
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-e, --exercise` | *(required)* | Exercise in format `name:duration_seconds` (repeatable) |
+| `-r, --rest` | `10` | Rest duration in seconds between exercises |
+| `-o, --output` | `data/workout.mp4` | Output MP4 file path |
+| `-w, --width` | `1920` | Video width in pixels |
+| `-h, --height` | `1080` | Video height in pixels |
+| `--fps` | `4` | Frames per second |
+| `-m, --music` | None | MP3 file for background music (trimmed to video length) |
+| `-t, --title` | None | Workout name shown on a title card at the start |
+| `--title-duration` | `20` | Title card duration in seconds |
+
+**Examples:**
+
+```bash
+# Simple workout
+uv run generate-exercise-gif generate-workout \
+  -e squats:30 \
+  -e push-ups:30 \
+  -e high-knees:30 \
+  --rest 10
+
+# Full workout with title and music
+uv run generate-exercise-gif generate-workout \
+  -e push-ups:35 \
+  -e high-knees:35 \
+  -e biceps-curl:35 \
+  -e mountain-climbers:35 \
+  -e alternative-sit-up:35 \
+  --rest 10 \
+  -t "Morning Circuit" \
+  -m music.mp3 \
+  -o data/morning_circuit.mp4
+```
+
+The exercise name in `-e` must match a GIF filename in `data/gifs/` (without the `.gif` extension). Generate the GIFs first with the `generate` command.
+
+### `generate-gif` — Generate an exercise GIF
 
 Generate an animated GIF for a single exercise using AI-generated frames.
 
@@ -44,72 +102,15 @@ Built-in exercises: `jumping-jacks`, `squats`, `push-ups`, `lunges`, `burpees`. 
 
 ```bash
 # Generate a built-in exercise
-uv run generate-exercise-gif generate squats
+uv run generate-exercise-gif generate-gif squats
 
 # Custom exercise with a fixed seed
-uv run generate-exercise-gif generate "kettlebell-swings" --seed 42
+uv run generate-exercise-gif generate-gif  "kettlebell-swings" --seed 42
 
 # Higher resolution, no label
-uv run generate-exercise-gif generate push-ups -w 1920 -h 1080 --no-label
+uv run generate-exercise-gif generate-gif push-ups -w 1920 -h 1080 --no-label
 ```
 
-### `workout` — Assemble a workout video
-
-Combine exercise GIFs into a full workout MP4 video with countdown timers, rest screens, an optional title card, and background music.
-
-```bash
-uv run generate-exercise-gif workout [options]
-```
-
-**Options:**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-e, --exercise` | *(required)* | Exercise in format `name:duration_seconds` (repeatable) |
-| `-r, --rest` | `10` | Rest duration in seconds between exercises |
-| `-o, --output` | `data/workout.mp4` | Output MP4 file path |
-| `-w, --width` | `1920` | Video width in pixels |
-| `-h, --height` | `1080` | Video height in pixels |
-| `--fps` | `4` | Frames per second |
-| `-m, --music` | None | MP3 file for background music (trimmed to video length) |
-| `-t, --title` | None | Workout name shown on a title card at the start |
-| `--title-duration` | `20` | Title card duration in seconds |
-
-**Examples:**
-
-```bash
-# Simple workout
-uv run generate-exercise-gif workout \
-  -e squats:30 \
-  -e push-ups:30 \
-  -e high-knees:30 \
-  --rest 10
-
-# Full workout with title and music
-uv run generate-exercise-gif workout \
-  -e push-ups:35 \
-  -e high-knees:35 \
-  -e biceps-curl:35 \
-  -e mountain-climbers:35 \
-  -e alternative-sit-up:35 \
-  --rest 10 \
-  -t "Morning Circuit" \
-  -m music.mp3 \
-  -o data/morning_circuit.mp4
-```
-
-The exercise name in `-e` must match a GIF filename in `data/gifs/` (without the `.gif` extension). Generate the GIFs first with the `generate` command.
-
-## Project Structure
-
-```
-workout_app/
-  exercises.py   # Exercise pose definitions and style prompts
-  generate.py    # AI image generation via Replicate
-  gif.py         # GIF tooling: labeling, loading, saving
-  video.py       # Workout video assembly (MP4 with ffmpeg)
-  cli.py         # CLI commands (generate, workout)
-```
 
 ## Claude Code Skills
 
