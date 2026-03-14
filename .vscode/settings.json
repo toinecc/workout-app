@@ -1,0 +1,57 @@
+{
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": true,
+  "python.languageServer": "Pylance",
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "ruff.enable": true,
+  "ruff.fixAll": true,
+  "ruff.organizeImports": true,
+  "autoDocstring.docstringFormat": "numpy",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "never",
+      "source.organizeImports": "never",
+      "source.organizeImports.ruff": "explicit"
+    },
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "editor.formatOnType": false,
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+  "terminal.integrated.profiles.osx": {
+    "rosetta": {
+      "path": "arch",
+      "args": [
+        "-x86_64",
+        "zsh",
+        "-l"
+      ],
+      "overrideName": true
+    }
+  },
+  "cSpell.words": [
+    "barmode",
+    "colorscale",
+    "dtype",
+    "extmath",
+    "fillna",
+    "finfo",
+    "mstv",
+    "nfev",
+    "sqlalchemy",
+    "sqlmodel",
+    "stationarity",
+    "vbrte",
+    "Viridis",
+    "xaxes",
+    "zaxis"
+  ],
+  "python.analysis.autoImportCompletions": true,
+  "makefile.configureOnOpen": false
+}

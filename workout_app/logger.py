@@ -138,4 +138,3 @@ def get_logger(
     logger.propagate = True
 
     return logger
-

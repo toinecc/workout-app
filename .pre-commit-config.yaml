@@ -1,0 +1,37 @@
+default_language_version:
+  python: python3.12
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+        exclude: |
+          (?x)^(
+              uv.lock|
+              docs/images/uc_hx_min_supply_temp/pipeline.png
+          )$
+      - id: check-ast
+      - id: check-json
+        exclude: .vscode/.*.json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+        exclude: mkdocs.yml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: name-tests-test
+        exclude: (helpers|utils|conftest).py
+      - id: trailing-whitespace
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.11.2
+    hooks:
+      # Run the Ruff linter.
+      - id: ruff
+        types_or: [python, pyi, jupyter]
+      # Run the Ruff formatter.
+      - id: ruff-format
+        types_or: [python, pyi, jupyter]

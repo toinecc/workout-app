@@ -9,9 +9,7 @@ from PIL import Image, ImageDraw
 from workout_app.gif import _get_font, add_label, load_gif_frames
 
 
-def _make_rest_frame(
-    width: int, height: int, seconds_left: int
-) -> Image.Image:
+def _make_rest_frame(width: int, height: int, seconds_left: int) -> Image.Image:
     """Create a single rest screen frame with countdown."""
     # Deep navy blue matching the exercise background
     img = Image.new("RGB", (width, height), BACKGROUND_COLOR)
@@ -149,10 +147,9 @@ def build_workout(
 
     # Title card at the beginning
     if title:
-        total_workout_time = (
-            sum(e["duration"] for e in exercises)
-            + rest_duration * max(0, len(exercises) - 1)
-        )
+        total_workout_time = sum(
+            e["duration"] for e in exercises
+        ) + rest_duration * max(0, len(exercises) - 1)
         title_frame = _make_title_frame(width, height, title, total_workout_time)
         for _ in range(title_duration * fps):
             all_frames.append(title_frame)
@@ -162,9 +159,10 @@ def build_workout(
         duration_secs = ex["duration"]
         name = ex.get("name", gif_path.stem)
 
-        # Load and label the GIF frames
+        # Load GIF frames, fit to canvas, then add label at full video width
         frames, frame_duration_ms = load_gif_frames(gif_path)
-        labeled = [add_label(f.copy(), name.upper(), position="bottom") for f in frames]
+        fitted = [_fit_to_canvas(f, width, height) for f in frames]
+        labeled = [add_label(f.copy(), name.upper(), position="bottom") for f in fitted]
 
         # Expand GIF frames to match video fps, preserving original playback speed
         # Each GIF frame is repeated for (frame_duration_ms / 1000 * fps) video frames
@@ -193,21 +191,30 @@ def build_workout(
     video_duration = len(all_frames) / fps
 
     cmd = [
-        "ffmpeg", "-y",
-        "-f", "rawvideo",
-        "-pix_fmt", "rgb24",
-        "-s", f"{width}x{height}",
-        "-r", str(fps),
-        "-i", "-",
+        "ffmpeg",
+        "-y",
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgb24",
+        "-s",
+        f"{width}x{height}",
+        "-r",
+        str(fps),
+        "-i",
+        "-",
     ]
 
     if music:
         cmd += ["-i", str(music), "-t", str(video_duration), "-c:a", "aac", "-shortest"]
 
     cmd += [
-        "-c:v", "libx264",
-        "-pix_fmt", "yuv420p",
-        "-movflags", "+faststart",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
         str(output),
     ]
 

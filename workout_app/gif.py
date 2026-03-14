@@ -11,9 +11,9 @@ FONT_SIZE = 48
 def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """Load a bold TrueType font, falling back to the default font."""
     for path in (
-        "/System/Library/Fonts/Helvetica.ttc",       # macOS
+        "/System/Library/Fonts/Helvetica.ttc",  # macOS
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux
-        "C:\\Windows\\Fonts\\arialbd.ttf",            # Windows
+        "C:\\Windows\\Fonts\\arialbd.ttf",  # Windows
     ):
         try:
             return ImageFont.truetype(path, size)
@@ -22,9 +22,7 @@ def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def add_label(
-    img: Image.Image, label: str, position: str = "top"
-) -> Image.Image:
+def add_label(img: Image.Image, label: str, position: str = "top") -> Image.Image:
     """Add an exercise name label banner at the top or bottom."""
     draw = ImageDraw.Draw(img)
     font = _get_font(FONT_SIZE)

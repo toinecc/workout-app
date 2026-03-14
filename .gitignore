@@ -13,6 +13,5 @@ wheels/
 .DS_Store
 
 # # Generated data
-# data/musics/
-# data/musics/
-# !data/**/.gitkeep
+data/workouts/*
+!**/.gitkeep

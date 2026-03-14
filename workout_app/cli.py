@@ -6,12 +6,24 @@ from typing import Annotated
 
 import typer
 
-from workout_app.exercises import DEFAULT_STYLE, EXERCISES
-from workout_app.generate import generate_image
+from workout_app.generate import DEFAULT_STYLE, EXERCISES, generate_image
 from workout_app.gif import add_label, save_gif
 from workout_app.video import build_workout
 
 app = typer.Typer(help="CLI to create fun workouts!")
+
+GIF_DIR = Path("data/gifs")
+
+
+def _find_gif(name: str) -> Path | None:
+    """Find a GIF by name, searching recursively in data/gifs/."""
+    # Try direct path first
+    direct = GIF_DIR / f"{name}.gif"
+    if direct.exists():
+        return direct
+    # Search subdirectories
+    matches = list(GIF_DIR.rglob(f"{name}.gif"))
+    return matches[0] if matches else None
 
 
 @app.command()
@@ -26,7 +38,9 @@ def generate_gif(
     ] = None,
     style: Annotated[
         str,
-        typer.Option("--style", "-s", help="Art style prompt prefix for consistent visuals."),
+        typer.Option(
+            "--style", "-s", help="Art style prompt prefix for consistent visuals."
+        ),
     ] = DEFAULT_STYLE,
     width: Annotated[
         int,
@@ -42,15 +56,22 @@ def generate_gif(
     ] = 400,
     frames: Annotated[
         int,
-        typer.Option("--frames", "-f", help="Number of frames (only for custom exercises)."),
+        typer.Option(
+            "--frames", "-f", help="Number of frames (only for custom exercises)."
+        ),
     ] = 4,
     seed: Annotated[
         int,
-        typer.Option("--seed", help="Fixed seed for character consistency. Same seed = same character look."),
+        typer.Option(
+            "--seed",
+            help="Fixed seed for character consistency. Same seed = same character look.",
+        ),
     ] = None,
     label: Annotated[
         bool,
-        typer.Option("--label/--no-label", help="Add exercise name label on each frame."),
+        typer.Option(
+            "--label/--no-label", help="Add exercise name label on each frame."
+        ),
     ] = True,
 ):
     """Generate an animated GIF for a single exercise."""
@@ -107,13 +128,16 @@ def workout(
     exercise: Annotated[
         list[str],
         typer.Option(
-            "--exercise", "-e",
+            "--exercise",
+            "-e",
             help="Exercise in format 'name:duration_seconds' (e.g. 'squats:30'). Repeatable.",
         ),
     ],
     rest: Annotated[
         int,
-        typer.Option("--rest", "-r", help="Rest duration in seconds between exercises."),
+        typer.Option(
+            "--rest", "-r", help="Rest duration in seconds between exercises."
+        ),
     ] = 10,
     output: Annotated[
         Path,
@@ -133,31 +157,46 @@ def workout(
     ] = 4,
     music: Annotated[
         Path,
-        typer.Option("--music", "-m", help="MP3 file to use as background music (trimmed to video length)."),
+        typer.Option(
+            "--music",
+            "-m",
+            help="MP3 file to use as background music (trimmed to video length).",
+        ),
     ] = None,
     title: Annotated[
         str,
-        typer.Option("--title", "-t", help="Workout name shown on a title card at the start."),
+        typer.Option(
+            "--title", "-t", help="Workout name shown on a title card at the start."
+        ),
     ] = None,
     title_duration: Annotated[
         int,
-        typer.Option("--title-duration", help="How long the title card is shown in seconds."),
+        typer.Option(
+            "--title-duration", help="How long the title card is shown in seconds."
+        ),
     ] = 20,
 ):
     """Assemble exercise GIFs into a full workout MP4 video."""
     parsed: list[dict] = []
-    gif_dir = Path("data/gifs")
 
     for entry in exercise:
         if ":" not in entry:
-            typer.echo(f"Error: '{entry}' must be in format 'name:duration' (e.g. 'squats:30').", err=True)
+            typer.echo(
+                f"Error: '{entry}' must be in format 'name:duration' (e.g. 'squats:30').",
+                err=True,
+            )
             raise typer.Exit(1)
         name, dur = entry.rsplit(":", 1)
-        gif_path = gif_dir / f"{name}.gif"
-        if not gif_path.exists():
-            typer.echo(f"Error: GIF not found at {gif_path}. Generate it first.", err=True)
+        gif_path = _find_gif(name)
+        if gif_path is None:
+            typer.echo(
+                f"Error: GIF '{name}.gif' not found in {GIF_DIR}/. Generate it first.",
+                err=True,
+            )
             raise typer.Exit(1)
-        parsed.append({"gif": gif_path, "duration": int(dur), "name": name.replace("-", " ")})
+        parsed.append(
+            {"gif": gif_path, "duration": int(dur), "name": name.replace("-", " ")}
+        )
 
     output.parent.mkdir(parents=True, exist_ok=True)
 
@@ -176,7 +215,9 @@ def workout(
         typer.echo(f"Error: Music file {music} not found.", err=True)
         raise typer.Exit(1)
 
-    build_workout(parsed, rest, output, width, height, fps, music, title, title_duration)
+    build_workout(
+        parsed, rest, output, width, height, fps, music, title, title_duration
+    )
     typer.echo(f"Saved {output} ({width}x{height}px, {total}s)")
     if music:
         typer.echo(f"Music: {music}")

@@ -1,0 +1,18 @@
+{
+  "recommendations": [
+    "bierner.markdown-mermaid",
+    "charliermarsh.ruff",
+    "davidanson.vscode-markdownlint",
+    "github.vscode-github-actions",
+    "ms-python.mypy-type-checker",
+    "ms-python.python",
+    "ms-vscode.makefile-tools",
+    "redhat.vscode-xml",
+    "redhat.vscode-yaml",
+    "streetsidesoftware.code-spell-checker",
+    "tamasfe.even-better-toml",
+    "wayou.vscode-todo-highlight",
+    "yzhang.markdown-all-in-one"
+  ],
+  "unwantedRecommendations": []
+}
