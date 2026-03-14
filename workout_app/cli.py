@@ -1,4 +1,4 @@
-"""CLI to generate animated exercise GIFs using AI-generated images."""
+"""CLI to generate animated exercise GIFs and workout videos."""
 
 import random
 from pathlib import Path
@@ -7,7 +7,9 @@ from typing import Annotated
 import typer
 
 from workout_app.exercises import DEFAULT_STYLE, EXERCISES
-from workout_app.image import add_label, generate_image, save_gif
+from workout_app.generate import generate_image
+from workout_app.gif import add_label, save_gif
+from workout_app.video import build_workout
 
 app = typer.Typer(help="Generate fun exercise GIFs using AI.")
 
@@ -98,6 +100,86 @@ def generate(
     typer.echo(f"\nSaved {output} ({len(images)} frames, {width}x{height}px)")
     typer.echo(f"Individual frames in: {frames_dir}/")
     typer.echo(f"Re-run with --seed {seed} to get the same character style.")
+
+
+@app.command()
+def workout(
+    exercise: Annotated[
+        list[str],
+        typer.Option(
+            "--exercise", "-e",
+            help="Exercise in format 'name:duration_seconds' (e.g. 'squats:30'). Repeatable.",
+        ),
+    ],
+    rest: Annotated[
+        int,
+        typer.Option("--rest", "-r", help="Rest duration in seconds between exercises."),
+    ] = 10,
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Output MP4 file path."),
+    ] = Path("data/workout.mp4"),
+    width: Annotated[
+        int,
+        typer.Option("--width", "-w", help="Video width in pixels."),
+    ] = 1920,
+    height: Annotated[
+        int,
+        typer.Option("--height", "-h", help="Video height in pixels."),
+    ] = 1080,
+    fps: Annotated[
+        int,
+        typer.Option("--fps", help="Frames per second."),
+    ] = 4,
+    music: Annotated[
+        Path,
+        typer.Option("--music", "-m", help="MP3 file to use as background music (trimmed to video length)."),
+    ] = None,
+    title: Annotated[
+        str,
+        typer.Option("--title", "-t", help="Workout name shown on a title card at the start."),
+    ] = None,
+    title_duration: Annotated[
+        int,
+        typer.Option("--title-duration", help="How long the title card is shown in seconds."),
+    ] = 20,
+):
+    """Assemble exercise GIFs into a full workout MP4 video."""
+    parsed: list[dict] = []
+    gif_dir = Path("data/gifs")
+
+    for entry in exercise:
+        if ":" not in entry:
+            typer.echo(f"Error: '{entry}' must be in format 'name:duration' (e.g. 'squats:30').", err=True)
+            raise typer.Exit(1)
+        name, dur = entry.rsplit(":", 1)
+        gif_path = gif_dir / f"{name}.gif"
+        if not gif_path.exists():
+            typer.echo(f"Error: GIF not found at {gif_path}. Generate it first.", err=True)
+            raise typer.Exit(1)
+        parsed.append({"gif": gif_path, "duration": int(dur), "name": name.replace("-", " ")})
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    total_exercise = sum(e["duration"] for e in parsed)
+    total_rest = rest * (len(parsed) - 1) if len(parsed) > 1 else 0
+    total = total_exercise + total_rest
+
+    typer.echo(f"Building workout video ({len(parsed)} exercises, {total}s total):")
+    for e in parsed:
+        typer.echo(f"  - {e['name'].upper()}: {e['duration']}s")
+    if total_rest:
+        typer.echo(f"  - REST between exercises: {rest}s")
+    typer.echo("")
+
+    if music and not music.exists():
+        typer.echo(f"Error: Music file {music} not found.", err=True)
+        raise typer.Exit(1)
+
+    build_workout(parsed, rest, output, width, height, fps, music, title, title_duration)
+    typer.echo(f"Saved {output} ({width}x{height}px, {total}s)")
+    if music:
+        typer.echo(f"Music: {music}")
 
 
 if __name__ == "__main__":

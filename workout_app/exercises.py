@@ -25,14 +25,16 @@ EXERCISES: dict[str, list[str]] = {
 }
 
 DEFAULT_BACKGROUND = (
-    "outdoors in a sunny park with bright blue sky, fluffy white clouds, "
-    "green grass, and colorful flowers in the background"
+    "plain deep navy blue background with subtle paper grain texture, "
+    "uniform and simple, no scenery or objects"
 )
 
 DEFAULT_STYLE = (
-    "An athletic man with a cat head face, human muscular body, "
+    "An athletic man with a goofy dopey dog head, tongue hanging out, silly wide eyes, "
+    "human muscular body, "
     "wearing a bright neon fitness outfit with headband and sneakers, "
     "facing the viewer, front view, looking straight at camera, "
     "colorful cartoon style, bold outlines, fun and energetic, full body visible, "
+    "same character in every frame, consistent outfit and proportions, "
     f"exaggerated dynamic pose, comic book illustration, {DEFAULT_BACKGROUND}"
 )

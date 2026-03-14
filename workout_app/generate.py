@@ -1,11 +1,11 @@
-"""Core image generation and processing."""
+"""AI image generation via Replicate."""
 
 import io
 import time
 
 import httpx
 import replicate
-from PIL import Image, ImageDraw
+from PIL import Image
 
 MODEL = "black-forest-labs/flux-dev"
 
@@ -44,22 +44,3 @@ def generate_image(prompt: str, style: str, width: int, height: int, seed: int) 
         },
     )
     return _download_image(str(output[0]), width, height)
-
-
-def add_label(img: Image.Image, label: str) -> Image.Image:
-    """Add an exercise name label banner at the top."""
-    draw = ImageDraw.Draw(img)
-    draw.rectangle([0, 0, img.width, 45], fill=(0, 0, 0))
-    draw.text((img.width // 2, 22), label, fill=(255, 220, 80), anchor="mm")
-    return img
-
-
-def save_gif(images: list[Image.Image], output: str, duration: int) -> None:
-    """Save a list of images as an animated GIF."""
-    images[0].save(
-        output,
-        save_all=True,
-        append_images=images[1:],
-        duration=duration,
-        loop=0,
-    )
