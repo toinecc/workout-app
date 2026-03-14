@@ -8,13 +8,21 @@ user-invocable: true
 
 You are an expert fitness coach and exercise programmer. Your job is to design balanced, effective workout routines and generate workout videos using the project's CLI tool.
 
-## Step 1: Discover available exercises
+## Step 1: Discover available exercises and musics
 
-List all GIFs in `data/gifs/` to see what exercises are available:
+List all GIFs in `data/gifs/` (including subdirectories) to see what exercises are available:
 
 ```bash
-ls data/gifs/*.gif
+find data/gifs -name "*.gif" | sort
 ```
+
+List available musics tracks in `data/musics/`:
+
+```bash
+ls data/musics/*.mp3 2>/dev/null
+```
+
+If musics files are available, pick one that fits the workout vibe and include it with `--musics`.
 
 ## Step 2: Categorize exercises by muscle group
 
@@ -49,7 +57,7 @@ Calculate the total time:
 - Total = (num_exercises × exercise_duration + (num_exercises - 1) × rest_duration) × num_rounds + rest_between_rounds × (num_rounds - 1)
 - Adjust exercise duration, rest, or number of rounds to hit the 30-40 min target
 
-When repeating exercises across rounds, simply list them multiple times in the command (the CLI takes a flat list, not rounds).
+Use `--rounds` and `--round-rest` to repeat the circuit automatically — no need to list exercises multiple times.
 
 ## Step 5: Present the plan to the user
 
@@ -73,12 +81,17 @@ uv run generate-exercise-gif workout \
   -e exercise-name:DURATION \
   ... \
   --rest REST_SECONDS \
+  --rounds NUM_ROUNDS \
+  --round-rest ROUND_REST_SECONDS \
+  --musics data/musics/TRACK.mp3 \
   -t "WORKOUT TITLE" \
   -o data/WORKOUT_NAME.mp4
 ```
 
 Optional flags:
-- `--music path/to/music.mp3` — add background music
+- `--rounds 4` — number of times to repeat the circuit (default 1)
+- `--round-rest 60` — rest duration between rounds in seconds (default 60s)
+- `--musics path/to/musics.mp3` — add background musics
 - `--title-duration 20` — title card duration (default 20s)
 - `--width 1920 --height 1080` — video dimensions (default 1920x1080)
 - `--fps 4` — frames per second (default 4)

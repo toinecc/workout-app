@@ -119,6 +119,39 @@ def _frames_to_raw(frames: list[Image.Image], width: int, height: int) -> bytes:
     return bytes(raw)
 
 
+def _make_round_rest_frame(
+    width: int, height: int, seconds_left: int, next_round: int
+) -> Image.Image:
+    """Create a rest screen between rounds with countdown and next round info."""
+    img = Image.new("RGB", (width, height), BACKGROUND_COLOR)
+    draw = ImageDraw.Draw(img)
+    title_font = _get_font(72)
+    countdown_font = _get_font(120)
+    sub_font = _get_font(40)
+    draw.text(
+        (width // 2, height // 2 - 120),
+        "ROUND BREAK",
+        fill=(255, 220, 80),
+        anchor="mm",
+        font=title_font,
+    )
+    draw.text(
+        (width // 2, height // 2 + 20),
+        str(seconds_left),
+        fill=(255, 255, 255),
+        anchor="mm",
+        font=countdown_font,
+    )
+    draw.text(
+        (width // 2, height // 2 + 120),
+        f"Next: Round {next_round}",
+        fill=(180, 180, 180),
+        anchor="mm",
+        font=sub_font,
+    )
+    return img
+
+
 def build_workout(
     exercises: list[dict],
     rest_duration: int,
@@ -129,6 +162,8 @@ def build_workout(
     music: Path | None = None,
     title: str | None = None,
     title_duration: int = 20,
+    rounds: int = 1,
+    round_rest: int = 60,
 ) -> None:
     """Build a workout MP4 from exercise GIFs.
 
@@ -142,47 +177,59 @@ def build_workout(
         music: optional MP3 file to use as background music (trimmed to video length)
         title: optional workout name shown on a title card at the start
         title_duration: how long the title card is shown in seconds (default 20)
+        rounds: number of times to repeat the exercise circuit
+        round_rest: seconds of rest between rounds
     """
     all_frames: list[Image.Image] = []
 
     # Title card at the beginning
     if title:
-        total_workout_time = sum(
-            e["duration"] for e in exercises
-        ) + rest_duration * max(0, len(exercises) - 1)
+        exercises_per_round = len(exercises)
+        rest_per_round = rest_duration * max(0, exercises_per_round - 1)
+        time_per_round = sum(e["duration"] for e in exercises) + rest_per_round
+        total_workout_time = time_per_round * rounds + round_rest * max(0, rounds - 1)
         title_frame = _make_title_frame(width, height, title, total_workout_time)
         for _ in range(title_duration * fps):
             all_frames.append(title_frame)
 
-    for i, ex in enumerate(exercises):
+    # Pre-load and prepare all exercise frame cycles (avoid reloading each round)
+    exercise_cycles: list[tuple[list[Image.Image], str, int]] = []
+    for ex in exercises:
         gif_path = Path(ex["gif"])
         duration_secs = ex["duration"]
         name = ex.get("name", gif_path.stem)
 
-        # Load GIF frames, fit to canvas, then add label at full video width
         frames, frame_duration_ms = load_gif_frames(gif_path)
         fitted = [_fit_to_canvas(f, width, height) for f in frames]
         labeled = [add_label(f.copy(), name.upper(), position="bottom") for f in fitted]
 
-        # Expand GIF frames to match video fps, preserving original playback speed
-        # Each GIF frame is repeated for (frame_duration_ms / 1000 * fps) video frames
         video_frames_per_gif_frame = max(1, round(frame_duration_ms / 1000 * fps))
         one_cycle: list[Image.Image] = []
         for lf in labeled:
             one_cycle.extend([lf] * video_frames_per_gif_frame)
 
-        # Loop the cycle to fill the exercise duration, with countdown
-        total_frames_needed = duration_secs * fps
-        for j in range(total_frames_needed):
-            seconds_left = duration_secs - (j // fps)
-            frame = _add_countdown(one_cycle[j % len(one_cycle)], seconds_left)
-            all_frames.append(frame)
+        exercise_cycles.append((one_cycle, name, duration_secs))
 
-        # Add rest screens between exercises (not after the last one)
-        if i < len(exercises) - 1 and rest_duration > 0:
-            for sec in range(rest_duration, 0, -1):
-                rest_frame = _make_rest_frame(width, height, sec)
-                # Show each countdown number for 1 second (fps frames)
+    for rnd in range(rounds):
+        for i, (one_cycle, name, duration_secs) in enumerate(exercise_cycles):
+            # Loop the cycle to fill the exercise duration, with countdown
+            total_frames_needed = duration_secs * fps
+            for j in range(total_frames_needed):
+                seconds_left = duration_secs - (j // fps)
+                frame = _add_countdown(one_cycle[j % len(one_cycle)], seconds_left)
+                all_frames.append(frame)
+
+            # Add rest screens between exercises (not after the last one in the round)
+            if i < len(exercise_cycles) - 1 and rest_duration > 0:
+                for sec in range(rest_duration, 0, -1):
+                    rest_frame = _make_rest_frame(width, height, sec)
+                    for _ in range(fps):
+                        all_frames.append(rest_frame)
+
+        # Add longer rest between rounds (not after the last round)
+        if rnd < rounds - 1 and round_rest > 0:
+            for sec in range(round_rest, 0, -1):
+                rest_frame = _make_round_rest_frame(width, height, sec, rnd + 2)
                 for _ in range(fps):
                     all_frames.append(rest_frame)
 

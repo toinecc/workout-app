@@ -175,6 +175,19 @@ def workout(
             "--title-duration", help="How long the title card is shown in seconds."
         ),
     ] = 20,
+    rounds: Annotated[
+        int,
+        typer.Option(
+            "--rounds", help="Number of times to repeat the exercise circuit."
+        ),
+    ] = 1,
+    round_rest: Annotated[
+        int,
+        typer.Option(
+            "--round-rest",
+            help="Rest duration in seconds between rounds (longer break).",
+        ),
+    ] = 60,
 ):
     """Assemble exercise GIFs into a full workout MP4 video."""
     parsed: list[dict] = []
@@ -200,15 +213,23 @@ def workout(
 
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    total_exercise = sum(e["duration"] for e in parsed)
-    total_rest = rest * (len(parsed) - 1) if len(parsed) > 1 else 0
-    total = total_exercise + total_rest
+    # Calculate total time across all rounds
+    exercises_per_round = len(parsed)
+    rest_per_round = rest * (exercises_per_round - 1) if exercises_per_round > 1 else 0
+    exercise_time_per_round = sum(e["duration"] for e in parsed)
+    time_per_round = exercise_time_per_round + rest_per_round
+    total_round_rest = round_rest * (rounds - 1) if rounds > 1 else 0
+    total = time_per_round * rounds + total_round_rest
 
-    typer.echo(f"Building workout video ({len(parsed)} exercises, {total}s total):")
+    typer.echo(
+        f"Building workout video ({exercises_per_round} exercises × {rounds} rounds, {total}s total):"
+    )
     for e in parsed:
         typer.echo(f"  - {e['name'].upper()}: {e['duration']}s")
-    if total_rest:
-        typer.echo(f"  - REST between exercises: {rest}s")
+    typer.echo(f"  - REST between exercises: {rest}s")
+    if rounds > 1:
+        typer.echo(f"  - REST between rounds: {round_rest}s")
+        typer.echo(f"  - ROUNDS: {rounds}")
     typer.echo("")
 
     if music and not music.exists():
@@ -216,7 +237,17 @@ def workout(
         raise typer.Exit(1)
 
     build_workout(
-        parsed, rest, output, width, height, fps, music, title, title_duration
+        parsed,
+        rest,
+        output,
+        width,
+        height,
+        fps,
+        music,
+        title,
+        title_duration,
+        rounds,
+        round_rest,
     )
     typer.echo(f"Saved {output} ({width}x{height}px, {total}s)")
     if music:
